@@ -184,9 +184,10 @@ canvas {
 }
 
 .platforms-value {
-  color: #2236b7;
+  color: #44ff44;
   font-weight: bold;
   font-size: 28px;
+  text-shadow: 0 0 10px #44ff88;
 }
 
 .integrity-bar-container {
@@ -486,4 +487,13 @@ canvas {
 
 .hidden {
   display: none !important;
+}
+
+#platforms-value {
+  color: #44ff88 !important;
+  text-shadow: 0 0 10px #44ff88 !important;
+  font-size: 28px !important;
+  font-weight: bold !important;
+  display: inline-block !important;
+  visibility: visible !important;
 }

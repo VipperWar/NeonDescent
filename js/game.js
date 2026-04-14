@@ -22,6 +22,7 @@ class Game {
 
     // ====== PUNTUACIÓN ======
     this.platformsPassed = 0;
+    this.chunksPassed = 0;
     this.score = 0;
 
     // ====== CARRILES ======
@@ -340,6 +341,13 @@ class Game {
         platformData.touched = true;
         if (platformData.type === "boost") {
           this.player.applyBoost(1.5, 0.5);
+          if (this.overclockActive) {
+            setTimeout(() => {
+              if (this.overclockActive) {
+                this.player.mesh.material.emissive.setHex(0xffaa00);
+              }
+            }, 600); // un poco más que la duración del boost (0.5s)
+          }
         }
       }
     }
@@ -392,7 +400,7 @@ class Game {
       mesh,
       zMin,
       zMax: zMin + length,
-      passed: false,
+      chunksPassed: false,
       touched: false,
       type: isBoost ? "boost" : "normal",
     };
@@ -555,6 +563,7 @@ class Game {
     if (this.overclockActive) return;
 
     this.audio.play("overclock");
+    this.player.setOverclockActive(true);
     this.savedForwardSpeed = this.player.forwardSpeed;
     this.player.forwardSpeed *= 1.3;
     this.player.body.velocity.z = this.player.forwardSpeed;
@@ -580,6 +589,7 @@ class Game {
 
     this.player.forwardSpeed = this.savedForwardSpeed;
     this.player.body.velocity.z = this.player.forwardSpeed;
+    this.player.setOverclockActive(false);
 
     if (this.composer) {
       const bloomPass = this.composer.passes.find(
@@ -672,15 +682,20 @@ class Game {
     }
   }
 
-  checkPlatformPassed() {
+  checkChunkPassed() {
     const playerZ = this.player.body.position.z;
+
     for (let platform of this.platforms) {
-      if (!platform.passed && playerZ > platform.zMax) {
-        platform.passed = true;
-        if (platform.touched) {
-          this.platformsPassed++;
-          this.score += this.overclockActive ? 2 : 1;
-        }
+      if (!platform.chunkPassed && playerZ > platform.zMax) {
+        const chunkZ = platform.zMin;
+        this.platforms.forEach((p) => {
+          if (Math.abs(p.zMin - chunkZ) < 0.1) {
+            p.chunkPassed = true;
+          }
+        });
+
+        this.chunksPassed++;
+        this.score += this.overclockActive ? 2 : 1;
       }
     }
   }
@@ -970,7 +985,7 @@ class Game {
     }
 
     if (bitsValue) bitsValue.textContent = this.bitsCount;
-    if (platformsValue) platformsValue.textContent = this.platformsPassed;
+    if (platformsValue) platformsValue.textContent = this.chunksPassed;
 
     if (integrityFill) {
       integrityFill.style.width = `${Math.max(0, this.integrity)}%`;
@@ -1008,20 +1023,19 @@ class Game {
     }
 
     this.player.updateTimers(delta);
-    this.player.prevPosition.copy(this.player.body.position);
     this.world.step(1 / 60, delta, 10);
 
     this.updatePlatformTouched();
     this.checkObstacleCollisions();
     this.checkBitCollection();
-    this.checkPlatformPassed();
+    this.checkChunkPassed();
 
     if (this.player.isFalling()) {
       this.gameOver();
       return;
     }
 
-    this.player.updateVisuals();
+    this.player.updateVisuals(delta);
     this.updateTrail();
     this.updateCamera(delta);
     this.updateTrack();
@@ -1029,18 +1043,20 @@ class Game {
   }
 
   updateCamera(delta) {
-    const p = this.player.renderPosition || this.player.body.position;
+    const p = this.player.body.position;
     const targetPos = new THREE.Vector3(p.x * 0.4, p.y + 3, p.z - 7);
 
     if (!this._cameraReady) {
       this.camera.position.copy(targetPos);
       this._cameraReady = true;
     } else {
-      const smooth = 1 - Math.pow(0.001, delta);
+      const speed = 8.0;
+      const smooth = 1.0 - Math.exp(-speed * delta);
       this.camera.position.lerp(targetPos, smooth);
     }
 
     this.camera.lookAt(p.x, p.y + 0.5, p.z + 10);
+
     const tilt = this.player.body.velocity.x * 0.012;
     const clampedTilt = Math.min(0.12, Math.max(-0.12, tilt));
     const tiltQuat = new THREE.Quaternion();
@@ -1055,11 +1071,13 @@ class Game {
     const finalDistance = document.getElementById("final-distance");
     const finalSpeed = document.getElementById("final-speed");
     const finalScore = document.getElementById("final-score");
+    const finalPlatforms = document.getElementById("final-platforms");
 
     if (finalDistance) finalDistance.textContent = this.distance;
     if (finalSpeed)
       finalSpeed.textContent = Math.floor(this.player.forwardSpeed * 10);
     if (finalScore) finalScore.textContent = this.score;
+    if (finalPlatforms) finalPlatforms.textContent = this.chunksPassed;
 
     const gameoverScreen = document.getElementById("gameover-screen");
     if (gameoverScreen) gameoverScreen.classList.remove("hidden");
@@ -1144,6 +1162,7 @@ class Game {
     this.integrity = 100;
     this.distance = 0;
     this.platformsPassed = 0;
+    this.chunksPassed = 0;
     this.score = 0;
     this.overclockActive = false;
     this.overclockTimer = 0;
@@ -1168,17 +1187,22 @@ class Game {
     this.trailPositions = [];
 
     this.player.reset();
-    this.player.mesh.material.emissive.setHex(0x0088aa);
+    this.player.setOverclockActive(false);
 
-    this.camera.position.set(0, 6, -7);
-    this.camera.lookAt(0, 1, 10);
-    this._cameraReady = false;
+    const playerPos = this.player.body.position;
+    this.camera.position.set(
+      playerPos.x * 0.4,
+      playerPos.y + 3,
+      playerPos.z - 7,
+    );
+    this.camera.lookAt(playerPos.x, playerPos.y + 0.5, playerPos.z + 10);
+    this._cameraReady = true;
 
     if (this.environment) {
       this.environment.reset();
       this.environment.setVisible(true);
     } else {
-      this.environment = new Environment(this.scene, -16.0);
+      this.environment = new Environment(this.scene, this.camera, -16.0);
     }
 
     this.currentZ = 0;
