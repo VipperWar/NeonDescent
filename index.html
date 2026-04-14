@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>NEON DESCENT</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Pantalla de carga -->
+    <div id="loading-screen">
+      LOADING SYSTEM.. <span id="loading-dots">.</span>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud" class="hud hidden">
+      <div class="hud-top-left">
+        <div class="speedometer">
+          <span class="speed-label">SPEED</span>
+          <span id="speed-value" class="speed-value">0</span>
+          <span class="speed-unit">Mbps</span>
+        </div>
+        <div class="distance">
+          <span class="dist-label">DISTANCE</span>
+          <span id="distance-value" class="dist-value">0</span>
+          <span class="dist-unit">m</span>
+        </div>
+      </div>
+      <div class="hud-top-right">
+        <div class="bits-counter">
+          <span class="bits-icon">⚡</span>
+          <span id="bits-value" class="bits-value">0</span>
+          <span class="bits-max">/10</span>
+        </div>
+        <div class="integrity-bar-container">
+          <div id="integrity-fill" class="integrity-fill"></div>
+        </div>
+        <div class="platforms-counter">
+          <span class="platforms-icon">🟦</span>
+          <span id="platforms-value">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pantalla de Game Over -->
+    <div id="gameover-screen" class="gameover-screen hidden">
+      <div class="neon-title gameover-title">DATA LOST</div>
+      <div class="gameover-stats">
+        <p>DISTANCE: <span id="final-distance">0</span> m</p>
+        <p>MAX SPEED: <span id="final-speed">0</span> Mbps</p>
+      </div>
+      <button id="btn-restart" class="neon-btn neon-btn-blue">⟳ RESTART</button>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <!-- Scripts básicos de Three.js -->
+    <script src="lib/three.min_r140.js"></script>
+    <script src="lib/OrbitControls.js"></script>
+    <script src="lib/tween_18.js"></script>
+    <script src="lib/stats.min.js"></script>
+
+    <!-- Shaders -->
+    <script src="lib/CopyShader.js"></script>
+    <script src="lib/LuminosityHighPassShader.js"></script>
+    <script src="lib/DigitalGlitch.js"></script>
+
+    <!-- Post‑procesado -->
+    <script src="lib/Howler.js"></script>
+    <script src="lib/EffectComposer.js"></script>
+    <script src="lib/ShaderPass.js"></script>
+    <script src="lib/RenderPass.js"></script>
+    <script src="lib/UnrealBloomPass.js"></script>
+    <script src="lib/GlitchPass.js"></script>
+
+    <!-- Cannon.js -->
+    <script src="lib/cannon_062.js"></script>
+
+    <!-- Scripts del juego -->
+    <script src="js/AudioManager.js"></script>
+    <script src="js/environment.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/intro.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>
